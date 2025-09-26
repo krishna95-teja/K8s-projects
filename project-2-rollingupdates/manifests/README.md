@@ -70,15 +70,7 @@ Use port-forwarding to test locally:
 kubectl port-forward svc/rolling-deployment 8080:80 -n example-ns
 curl http://localhost:8080
 Note: A Service may need to be created for external access.
-
+-------------------------------------------------------------------
 8. Cleanup
 kubectl delete -f manifests/deployment.yaml
 kubectl delete namespace example-ns
-Next Steps / Exploration
-Add a ClusterIP Service to expose the Deployment internally
-
-Experiment with different maxSurge and maxUnavailable values
-
-Try a Recreate strategy instead of RollingUpdate
-
-Connect the Deployment to a ConfigMap or Secret
