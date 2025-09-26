@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+   name: example-ns
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+   name: cmap-project
+   namespace: example-ns          # Best practice
+data:
+   APP_NAME: cmap-application
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: secret-project
+   namespace: example-ns          # Best practice
+type: Opaque
+stringData:
+   DB_USER: Secret@2345        # Un-encoded password
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+   name: pod-project
+   namespace: example-ns          # Best practice
+   labels:
+      tier: backend
+spec:
+   containers:
+      - name: nginx
+        image: nginx:1.28              # Version mentioned as a best practice
+        volumeMounts:                  # cmap & secret referred as files
+           - name: cmap-mount
+             mountPath: /etc/cmap
+           - name: secret-mount
+             mountPath: /etc/secret
+        env:  
+           - name: APP_DETAILS
+             valueFrom:
+                configMapKeyRef:             # Invoking config map created earlier as a env variable
+                   name: cmap-project
+                   key: APP_NAME
+           - name: DB_USER
+             valueFrom:        
+                secretKeyRef:                # Invoking secret created above as a env variable
+                   name: secret-project
+                   key: DB_USER
+   volumes:
+      - name: cmap-mount
+        configMap:                     # Referring to configmap as a volume
+           name: cmap-project
+      - name: secret-mount
+        secret:                        # Referring to secret as a volume
+           name: secret-project
