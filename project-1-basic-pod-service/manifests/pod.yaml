@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-world-pod
+  namespace: example-ns
+  labels:
+    tier: backend
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25-alpine   # Pin version, avoid 'latest'
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: web-content
+          mountPath: /usr/share/nginx/html   # Correct path for Nginx web root
+  volumes:
+    - name: web-content
+      emptyDir: {}   # Simple demo volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-clusterip
+  namespace: example-ns
+spec:
+  type: ClusterIP
+  selector:
+    tier: backend
+  ports:
+    - port: 8080
+      targetPort: 80
