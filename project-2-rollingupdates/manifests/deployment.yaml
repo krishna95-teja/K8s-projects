@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+   name: example-ns          # Created as a best practice
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: rolling-deployment
+   namespace: example-ns       # Isolate workloads in cluster
+spec:
+   replicas: 3
+   selector: 
+      matchLabels:
+         tier: backend
+   template:
+      metadata:
+         labels:
+            tier: backend      # Matches selector.matchlabels.tier
+      spec:
+         containers:
+            - name: nginx
+              image: nginx:1.25            # Version should be added as a best practice
+              ports:
+                 - containerPort: 80       # Port on which container is accessible
+   strategy:
+      type: RollingUpdate                  # Rolling update is selected
+      rollingUpdate:
+         maxUnavailable: 1                 # 1 Pod can be allowed to be inactive at any time
+         maxSurge: 1
