@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace                       # Best practice to isolate resources
+metadata:
+   name: example-ns
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: pv-project                   # PV is cluster-scoped, no namespace
+spec:
+   accessModes:
+      - ReadWriteOnce                 # Ideal for pods which have their own individual storage
+   capacity:
+      storage: 1Gi                    # Total available space
+   persistentVolumeReclaimPolicy: Retain
+   hostPath:                          # Host path on node where the PV is placed
+     path: /mnt/data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+   name: pvc-project
+   namespace: example-ns               # PVC is namespace-scoped
+spec:
+   accessModes: 
+      - ReadWriteOnce
+   resources:
+      requests:
+         storage: 500Mi                # If PVC requested storage > PV capacity, cluster looks for another matching PV
+---
+apiVersion: v1
+kind: Pod
+metadata: 
+   name: pod-project
+   namespace: example-ns
+spec:
+   containers:
+       - name: nginx
+         image: nginx:1.28
+         volumeMounts:
+            - name: pv-mount
+              mountPath: /mnt/storage/project
+   volumes:
+      - name: pv-mount
+        persistentVolumeClaim:
+           claimName: pvc-project
