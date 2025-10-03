@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+   name: probes-project
+   namespace: example-ns                      # best practice using namespace of previous projects for reference
+spec:
+   containers:
+      - name: nginx
+        image: nginx:1.28                # best practice to mention exact version
+        ports:
+           - containerPort: 80
+        startupProbe:
+           httpGet:
+              path: /
+              port: 80
+           failureThreshold: 10           # Waits 10 times i.e. 50 sec before marking a container as 'failed'
+           periodSeconds: 5             # Checks health status every 5 secs
+        livenessProbe:
+           httpGet:
+              path: /
+              port: 80
+           initialDelaySeconds:15         # Waits for 15sec before 1st check 
+           periodSeconds: 10             # checks health status every 10 secs
+        readinessProbe:
+           httpGet:
+              path: /
+              port: 80
+           initialDelaySeconds: 5
+           periodSeconds: 5
