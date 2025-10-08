@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata: 
+   name: headlesssvc-project
+   namespace: example-ns                      # Best practice
+spec:
+   clusterIP: None                            # Headless service for internal pod DNS resolution (no external exposure)
+   selector:
+      tier: database-project
+   ports:
+      - targetPort:3306                       # Port number of the container, preferably MYSQL compliant
+        port: 3306                            # Port which directs the traffic to the target container
+        protocol: TCP
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: pv-project                           # PV is cluster scoped, hence no NS
+spec:
+   accessModes:
+      - ReadWriteOnce
+   capacity:
+      storage: 1Gi
+   persistentVolumeReclaimPolicy: Retain               # Retains storage even after PV is deleted
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: secret-db
+   namespace: example-ns               # NS included as best practice 
+type: Opaque
+stringData:
+   mysql-root-password: mysql_241212                # key-value pairing of username & password in string format
+
+---
+
+#Stateful set is similar to Deployment, hence syntax is almost the same except for the headless link & PV link
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: sset-project
+   namespace: example-ns                      # Same NS as the headless service for better isolation
+spec:
+   serviceName: headlesssvc-project           # Links the stateful set to the headless service
+   replicas: 3
+   selector:
+      matchLabels:
+         tier: database-project               # Need to match headless service as well
+   template:
+      metadata:
+         labels:
+            tier: database-project
+      spec:
+         containers:
+            - name: mysql
+              image: mysql:8.0                    # Best practice
+              ports:
+                 - containerPort: 3306
+              volumeMounts:
+                 - name: sset-volume
+                   mountPath: /mnt/storage        # Path where storage is mounted inside container
+              env:
+                 - name: db-username
+                   secretKeyRef:
+                      name: secret-db             # Secret name referred
+                      key: mysql-root-password    # Secret key value referred here
+                    
+   volumeClaimTemplates:
+   - metadata:
+        name: sset-volume
+     spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+           requests:
+              storage: 100Mi
+              
